@@ -1,151 +1,156 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced 3D MRI Workstation (NIfTI/DICOM)</title>
-    <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000;
-            color: #d1d5db;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .workstation {
-            display: flex;
-            gap: 20px;
-            background: #111827;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #374151;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-            max-width: 1100px;
-            width: 100%;
-        }
-        .controls-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            background: #1f2937;
-            padding: 20px;
-            border-radius: 6px;
-        }
-        .screen-panel {
-            flex: 2.5;
-            display: flex;
-            flex-direction: column;
-            background-color: #000;
-            border-radius: 6px;
-            border: 1px solid #4b5563;
-            position: relative;
-        }
-        h2 { margin-top: 0; color: #60a5fa; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #374151; padding-bottom: 10px;}
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.85rem; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
-        select, button { padding: 8px; border-radius: 4px; border: 1px solid #4b5563; background-color: #111827; color: #fff; }
-        button { background-color: #2563eb; font-weight: bold; cursor: pointer; padding: 12px; transition: 0.2s;}
-        button:hover { background-color: #1d4ed8; }
-        button:disabled { background-color: #374151; color: #6b7280; cursor: not-allowed; }
-        
-        /* The WebGL Canvas replaces the img tag */
-        canvas {
-            width: 100%;
-            height: 500px;
-            display: block;
-            outline: none;
-        }
-        
-        .instructions {
-            font-size: 0.8rem;
-            color: #fbbf24;
-            background: #451a03;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 20px;
-            line-height: 1.4;
-        }
-    </style>
-</head>
-<body>
+<script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
 
-    <div class="workstation">
-        <div class="controls-panel">
-            <h2>3D Acquisition Console</h2>
+<style>
+    #mri-clinical-suite {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #0f172a;
+        color: #f8fafc;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        max-width: 100%;
+        margin: 20px auto;
+        box-sizing: border-box;
+    }
+    .mri-header {
+        border-bottom: 1px solid #334155;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .mri-title {
+        margin: 0;
+        font-size: 1.2rem;
+        color: #38bdf8;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .mri-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .mri-btn, .mri-select {
+        background-color: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid #475569;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: 600;
+    }
+    .mri-btn:hover {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .mri-btn.active {
+        background-color: #0284c7;
+        border-color: #0ea5e9;
+    }
+    .mri-canvas-container {
+        width: 100%;
+        height: 600px;
+        background-color: #000;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #334155;
+    }
+    #mri-gl-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        outline: none;
+    }
+    .mri-footer {
+        margin-top: 15px;
+        font-size: 0.75rem;
+        color: #94a3b8;
+        display: flex;
+        justify-content: space-between;
+    }
+</style>
+
+<div id="mri-clinical-suite">
+    <div class="mri-header">
+        <h2 class="mri-title">Volumetric Imaging Suite</h2>
+        <div class="mri-controls">
+            <button class="mri-btn" onclick="changeView('axial')">Axial</button>
+            <button class="mri-btn" onclick="changeView('coronal')">Coronal</button>
+            <button class="mri-btn" onclick="changeView('sagittal')">Sagittal</button>
+            <button class="mri-btn active" id="btn-multi" onclick="changeView('multi')">Multi-Planar</button>
+            <button class="mri-btn" style="background-color: #4f46e5;" onclick="changeView('3d')">3D Render</button>
             
-            <div class="control-group">
-                <label>Select Dataset (NIfTI Format)</label>
-                <select id="dataset-select">
-                    <option value="https://niivue.github.io/niivue/images/mni152.nii.gz">High-Res Brain Template (MNI152)</option>
-                    <option value="https://niivue.github.io/niivue/images/hippo.nii.gz">High-Res Hippocampus</option>
-                </select>
-            </div>
-            
-            <button id="scan-btn" onclick="startVolumetricScan()">LOAD 3D VOLUME</button>
-
-            <div class="instructions">
-                <strong>RADIOLOGIST CONTROLS:</strong><br>
-                • <strong>Scroll Wheel:</strong> Move through slices (Z-axis).<br>
-                • <strong>Right-Click & Drag:</strong> Adjust Window/Level (Contrast/Brightness).<br>
-                • <strong>Left-Click & Drag:</strong> Pan the image.<br>
-                • <strong>Drag & Drop:</strong> You can drag a .dcm or .nii file straight from your computer onto the screen to view it!
-            </div>
-        </div>
-
-        <div class="screen-panel">
-            <canvas id="gl-canvas"></canvas>
+            <select class="mri-select" id="colormap-select" onchange="changeColorMap()">
+                <option value="gray">Grayscale (Standard)</option>
+                <option value="plasma">Plasma (Heatmap)</option>
+                <option value="viridis">Viridis (Tissue)</option>
+                <option value="red">Red (Vascular)</option>
+            </select>
         </div>
     </div>
 
-    <script>
-        // Initialize the Niivue renderer
-        const nv = new niivue.Niivue({
-            dragAndDropEnabled: true, // Allows dragging .dcm or .nii files from desktop
-            backColor: [0, 0, 0, 1],  // Black background
-            show3Dcrosshair: true,
-            isColorbar: true
-        });
+    <div class="mri-canvas-container">
+        <canvas id="mri-gl-canvas"></canvas>
+    </div>
+
+    <div class="mri-footer">
+        <span><strong>Controls:</strong> Scroll to change slice | Right-Click + Drag for Window/Level | Drag & Drop .nii / .dcm files to load local data</span>
+        <span id="mri-status">Status: SYSTEM READY</span>
+    </div>
+</div>
+
+<script>
+    // Initialize the advanced Niivue renderer
+    const nv = new niivue.Niivue({
+        dragAndDropEnabled: true,
+        backColor: [0, 0, 0, 1], // Pure black background for clinical accuracy
+        show3Dcrosshair: true,   // Syncs crosshairs across all views
+        crosshairColor: [0, 1, 0, 1], // Green crosshairs
+        isColorbar: true         // Shows measurement scale
+    });
+    
+    // Attach to canvas
+    nv.attachTo('mri-gl-canvas');
+
+    // Load default high-res Brain NIfTI
+    nv.loadVolumes([{
+        url: 'https://niivue.github.io/niivue/images/mni152.nii.gz',
+        name: 'mni152',
+        colormap: 'gray'
+    }]).then(() => {
+        // Set to multi-planar view by default once loaded
+        nv.setSliceType(nv.sliceTypeMultiplanar);
+        document.getElementById('mri-status').innerText = "Status: DEFAULT VOLUME LOADED";
+    });
+
+    // Function to handle switching views
+    function changeView(viewType) {
+        // Reset button styles
+        document.querySelectorAll('.mri-btn').forEach(btn => btn.classList.remove('active'));
         
-        // Attach the renderer to our canvas
-        nv.attachTo('gl-canvas');
+        // Apply selected view
+        if (viewType === 'axial') nv.setSliceType(nv.sliceTypeAxial);
+        if (viewType === 'coronal') nv.setSliceType(nv.sliceTypeCoronal);
+        if (viewType === 'sagittal') nv.setSliceType(nv.sliceTypeSagittal);
+        if (viewType === 'multi') nv.setSliceType(nv.sliceTypeMultiplanar);
+        if (viewType === '3d') nv.setSliceType(nv.sliceTypeRender);
+        
+        event.target.classList.add('active');
+    }
 
-        // Set default view to Axial
-        nv.setSliceType(nv.sliceTypeAxial);
-
-        async function startVolumetricScan() {
-            const scanBtn = document.getElementById('scan-btn');
-            const fileUrl = document.getElementById('dataset-select').value;
-            
-            scanBtn.disabled = true;
-            scanBtn.innerText = "FETCHING VOLUME...";
-
-            try {
-                // Clear the current canvas
-                nv.volumes = [];
-                
-                // Fetch and load the NIfTI volumetric data
-                await nv.loadVolumes([{
-                    url: fileUrl,
-                    name: 'patient_volume'
-                }]);
-                
-                scanBtn.innerText = "VOLUME LOADED";
-                setTimeout(() => {
-                    scanBtn.disabled = false;
-                    scanBtn.innerText = "LOAD 3D VOLUME";
-                }, 2000);
-
-            } catch (error) {
-                alert("Error fetching volume. It might be a CORS restriction or a bad network connection.");
-                console.error(error);
-                scanBtn.disabled = false;
-                scanBtn.innerText = "LOAD 3D VOLUME";
-            }
+    // Function to handle color maps for tissue differentiation
+    function changeColorMap() {
+        const selectedMap = document.getElementById('colormap-select').value;
+        if (nv.volumes.length > 0) {
+            nv.volumes[0].colormap = selectedMap;
+            nv.updateGLVolume();
         }
-    </script>
-</body>
-</html>
+    }
+</script>
