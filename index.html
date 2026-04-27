@@ -1,156 +1,203 @@
-<script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical MRI PACS Workstation</title>
+    <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
+    <style>
+        /* True Clinical Dark Mode */
+        body, html { margin: 0; padding: 0; height: 100%; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #b3b3b3; overflow: hidden; }
+        
+        .pacs-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #0c0c0c; border: 1px solid #1a1a1a; box-sizing: border-box; }
+        
+        /* Top Navigation / Patient Banner */
+        .pacs-header { background-color: #111; border-bottom: 2px solid #222; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .patient-info { display: flex; gap: 25px; color: #e0e0e0; }
+        .patient-info span { color: #5c9ce6; font-weight: bold; margin-right: 5px; }
+        .hospital-logo { color: #5c9ce6; font-weight: 800; font-size: 16px; letter-spacing: 1px; }
 
-<style>
-    #mri-clinical-suite {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #0f172a;
-        color: #f8fafc;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        max-width: 100%;
-        margin: 20px auto;
-        box-sizing: border-box;
-    }
-    .mri-header {
-        border-bottom: 1px solid #334155;
-        padding-bottom: 15px;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    .mri-title {
-        margin: 0;
-        font-size: 1.2rem;
-        color: #38bdf8;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    .mri-controls {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    .mri-btn, .mri-select {
-        background-color: #1e293b;
-        color: #e2e8f0;
-        border: 1px solid #475569;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: 0.2s;
-        font-weight: 600;
-    }
-    .mri-btn:hover {
-        background-color: #3b82f6;
-        color: white;
-    }
-    .mri-btn.active {
-        background-color: #0284c7;
-        border-color: #0ea5e9;
-    }
-    .mri-canvas-container {
-        width: 100%;
-        height: 600px;
-        background-color: #000;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #334155;
-    }
-    #mri-gl-canvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-        outline: none;
-    }
-    .mri-footer {
-        margin-top: 15px;
-        font-size: 0.75rem;
-        color: #94a3b8;
-        display: flex;
-        justify-content: space-between;
-    }
-</style>
+        /* Toolbar */
+        .pacs-toolbar { background-color: #1a1a1a; padding: 8px 15px; display: flex; gap: 10px; border-bottom: 1px solid #000; align-items: center; }
+        .tool-group { display: flex; border-right: 1px solid #333; padding-right: 15px; margin-right: 5px; }
+        .pacs-btn { background: transparent; color: #b3b3b3; border: 1px solid #333; padding: 6px 12px; margin: 0 3px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.1s; text-transform: uppercase; }
+        .pacs-btn:hover { background: #333; color: #fff; }
+        .pacs-btn.active { background: #2b5c8f; color: #fff; border-color: #5c9ce6; }
 
-<div id="mri-clinical-suite">
-    <div class="mri-header">
-        <h2 class="mri-title">Volumetric Imaging Suite</h2>
-        <div class="mri-controls">
-            <button class="mri-btn" onclick="changeView('axial')">Axial</button>
-            <button class="mri-btn" onclick="changeView('coronal')">Coronal</button>
-            <button class="mri-btn" onclick="changeView('sagittal')">Sagittal</button>
-            <button class="mri-btn active" id="btn-multi" onclick="changeView('multi')">Multi-Planar</button>
-            <button class="mri-btn" style="background-color: #4f46e5;" onclick="changeView('3d')">3D Render</button>
-            
-            <select class="mri-select" id="colormap-select" onchange="changeColorMap()">
-                <option value="gray">Grayscale (Standard)</option>
-                <option value="plasma">Plasma (Heatmap)</option>
-                <option value="viridis">Viridis (Tissue)</option>
-                <option value="red">Red (Vascular)</option>
-            </select>
+        /* Main Workspace */
+        .pacs-workspace { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar */
+        .pacs-sidebar { width: 250px; background-color: #111; border-right: 2px solid #000; display: flex; flex-direction: column; }
+        .sidebar-title { background: #1a1a1a; padding: 8px 10px; font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; border-bottom: 1px solid #222; }
+        .series-list { padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .series-card { background: #1e1e1e; border: 1px solid #333; border-left: 3px solid #5c9ce6; padding: 10px; border-radius: 3px; cursor: pointer; }
+        .series-card.active { background: #2a2a2a; border-color: #5c9ce6; }
+        .series-card span { display: block; font-size: 12px; margin-bottom: 4px; }
+        .series-card .seq { color: #fff; font-weight: bold; font-size: 13px;}
+
+        /* Viewport Container */
+        .pacs-viewport-wrapper { flex: 1; position: relative; background-color: #000; display: flex; justify-content: center; align-items: center; }
+        
+        /* The WebGL Canvas */
+        canvas { width: 100%; height: 100%; display: block; outline: none; }
+
+        /* Loading Overlay */
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
+        .spinner { border: 4px solid #1a1a1a; border-top: 4px solid #5c9ce6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; }
+
+        /* Clinical DICOM Overlays */
+        .dicom-text { position: absolute; color: #e0e0e0; font-family: monospace; font-size: 12px; pointer-events: none; text-shadow: 1px 1px 2px #000; z-index: 10; }
+        .tl { top: 15px; left: 15px; }
+        .tr { top: 15px; right: 15px; text-align: right; }
+        .bl { bottom: 15px; left: 15px; }
+        .br { bottom: 15px; right: 15px; text-align: right; }
+        .dicom-value { color: #f5a623; }
+    </style>
+</head>
+<body>
+
+<div class="pacs-container">
+    <div class="pacs-header">
+        <div class="patient-info">
+            <div><span>ID:</span> <span class="dicom-value">MR-2026-0427</span></div>
+            <div><span>Name:</span> <span class="dicom-value">DOE^JOHN</span></div>
+            <div><span>DOB:</span> <span class="dicom-value">1980-01-01</span></div>
+            <div><span>Sex:</span> <span class="dicom-value">M</span></div>
+            <div><span>Study:</span> MRI BRAIN W/O CONTRAST</div>
+        </div>
+        <div class="hospital-logo">MED-STATION V4.2</div>
+    </div>
+
+    <div class="pacs-toolbar">
+        <div class="tool-group">
+            <button class="pacs-btn" onclick="setView('axial')" id="btn-axial">Axial</button>
+            <button class="pacs-btn" onclick="setView('coronal')" id="btn-coronal">Coronal</button>
+            <button class="pacs-btn" onclick="setView('sagittal')" id="btn-sagittal">Sagittal</button>
+            <button class="pacs-btn active" onclick="setView('multi')" id="btn-multi">Multi-Planar</button>
+        </div>
+        <div class="tool-group">
+            <button class="pacs-btn" onclick="setView('render')" id="btn-render" style="color: #f5a623; border-color: #553a0b;">3D Volume</button>
+        </div>
+        <div class="tool-group" style="border:none; color: #888; font-size: 11px;">
+            Action: Scroll (Z-Axis) • Right-Click (Window/Level) • Drag (Pan)
         </div>
     </div>
 
-    <div class="mri-canvas-container">
-        <canvas id="mri-gl-canvas"></canvas>
-    </div>
+    <div class="pacs-workspace">
+        <div class="pacs-sidebar">
+            <div class="sidebar-title">Series Explorer</div>
+            <div class="series-list">
+                <div class="series-card active" onclick="forceFetch()">
+                    <span class="seq">1. T1 MPRAGE High-Res</span>
+                    <span>Modality: MR</span>
+                    <span>Images: 256</span>
+                </div>
+                <div class="series-card" style="opacity: 0.5;">
+                    <span class="seq">2. T2 FLAIR Axial</span>
+                    <span>Modality: MR</span>
+                    <span>Images: 42</span>
+                </div>
+            </div>
+        </div>
 
-    <div class="mri-footer">
-        <span><strong>Controls:</strong> Scroll to change slice | Right-Click + Drag for Window/Level | Drag & Drop .nii / .dcm files to load local data</span>
-        <span id="mri-status">Status: SYSTEM READY</span>
+        <div class="pacs-viewport-wrapper">
+            <div id="loading-overlay">
+                <div class="spinner"></div>
+                <div class="loading-text">FETCHING SECURE DATASET...</div>
+            </div>
+
+            <div class="dicom-text tl">
+                Inst: <span class="dicom-value">General Med</span><br>
+                Date: 20260427<br>
+                Time: 10:12:03<br>
+            </div>
+            <div class="dicom-text tr">
+                Seq: T1 MPRAGE<br>
+                TR: <span class="dicom-value">1900.0</span><br>
+                TE: <span class="dicom-value">2.2</span><br>
+                Thk: <span class="dicom-value">1.0 mm</span>
+            </div>
+            <div class="dicom-text bl">
+                FOV: 256x256<br>
+                Matrix: 256x256
+            </div>
+            <div class="dicom-text br" style="color: #5c9ce6;">
+                INTERACTIVE MODE<br>
+                MPR SYNC ON
+            </div>
+
+            <canvas id="gl"></canvas>
+        </div>
     </div>
 </div>
 
 <script>
-    // Initialize the advanced Niivue renderer
+    // 1. Initialize Niivue with clinical settings
     const nv = new niivue.Niivue({
         dragAndDropEnabled: true,
-        backColor: [0, 0, 0, 1], // Pure black background for clinical accuracy
-        show3Dcrosshair: true,   // Syncs crosshairs across all views
-        crosshairColor: [0, 1, 0, 1], // Green crosshairs
-        isColorbar: true         // Shows measurement scale
+        backColor: [0, 0, 0, 1], // Pure black background
+        show3Dcrosshair: true,   // Sync crosshairs across views
+        crosshairColor: [0, 0.8, 0, 1], // Clinical green crosshairs
+        isColorbar: false,       // Hide colorbar for standard anatomy
+        textHeight: 0.03         // Native niivue text size
     });
     
-    // Attach to canvas
-    nv.attachTo('mri-gl-canvas');
+    nv.attachTo('gl');
+    nv.setSliceType(nv.sliceTypeMultiplanar); // Default to Multi-Planar
 
-    // Load default high-res Brain NIfTI
-    nv.loadVolumes([{
-        url: 'https://niivue.github.io/niivue/images/mni152.nii.gz',
-        name: 'mni152',
-        colormap: 'gray'
-    }]).then(() => {
-        // Set to multi-planar view by default once loaded
-        nv.setSliceType(nv.sliceTypeMultiplanar);
-        document.getElementById('mri-status').innerText = "Status: DEFAULT VOLUME LOADED";
-    });
-
-    // Function to handle switching views
-    function changeView(viewType) {
-        // Reset button styles
-        document.querySelectorAll('.mri-btn').forEach(btn => btn.classList.remove('active'));
+    // 2. The Auto-Fetch Function
+    async function autoFetchVolume() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        loadingOverlay.style.display = 'flex'; // Show loading screen
         
-        // Apply selected view
+        try {
+            // Highly reliable NIfTI URL from Niivue's official repository
+            const volumeList = [{
+                url: "https://niivue.github.io/niivue/images/mni152.nii.gz",
+                name: "mni152",
+                colormap: "gray"
+            }];
+            
+            // Wait for the download and rendering to complete
+            await nv.loadVolumes(volumeList);
+            
+            // Hide loading screen smoothly once finished
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+
+        } catch (error) {
+            console.error("Auto-fetch failed:", error);
+            loadingOverlay.innerHTML = "<div style='color:red; font-weight:bold;'>AUTO-FETCH FAILED. CHECK NETWORK C.O.R.S.</div>";
+        }
+    }
+
+    // 3. UI Control Functions
+    function setView(viewType) {
+        // Update active button styling
+        document.querySelectorAll('.tool-group .pacs-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('btn-' + viewType).classList.add('active');
+
+        // Command the rendering engine
         if (viewType === 'axial') nv.setSliceType(nv.sliceTypeAxial);
         if (viewType === 'coronal') nv.setSliceType(nv.sliceTypeCoronal);
         if (viewType === 'sagittal') nv.setSliceType(nv.sliceTypeSagittal);
         if (viewType === 'multi') nv.setSliceType(nv.sliceTypeMultiplanar);
-        if (viewType === '3d') nv.setSliceType(nv.sliceTypeRender);
-        
-        event.target.classList.add('active');
+        if (viewType === 'render') nv.setSliceType(nv.sliceTypeRender);
     }
 
-    // Function to handle color maps for tissue differentiation
-    function changeColorMap() {
-        const selectedMap = document.getElementById('colormap-select').value;
-        if (nv.volumes.length > 0) {
-            nv.volumes[0].colormap = selectedMap;
-            nv.updateGLVolume();
-        }
+    // 4. Manual trigger just in case
+    function forceFetch() {
+        autoFetchVolume();
     }
+
+    // 5. Execute Auto-Fetch immediately when page loads
+    window.onload = function() {
+        autoFetchVolume();
+    };
 </script>
+
+</body>
+</html>
