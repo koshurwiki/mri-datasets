@@ -11,46 +11,36 @@
         
         .pacs-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #080808; border: 1px solid #1a1a1a; box-sizing: border-box; }
         
-        /* Top Navigation / Patient Banner */
-        .pacs-header { background-color: #0a0a0a; border-bottom: 1px solid #1a1a1a; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); z-index: 10; }
+        .pacs-header { background-color: #0a0a0a; border-bottom: 1px solid #1a1a1a; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 10; }
         .patient-info { display: flex; gap: 30px; color: #d4d4d4; }
         .patient-info span { color: #5c9ce6; font-weight: 600; margin-right: 6px; }
         .hospital-logo { color: #5c9ce6; font-weight: 800; font-size: 16px; letter-spacing: 2px; }
 
-        /* Toolbar */
-        .pacs-toolbar { background-color: #121212; padding: 10px 20px; display: flex; gap: 15px; border-bottom: 1px solid #000; align-items: center; z-index: 9; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+        .pacs-toolbar { background-color: #121212; padding: 10px 20px; display: flex; gap: 15px; border-bottom: 1px solid #000; align-items: center; z-index: 9; }
         .tool-group { display: flex; border-right: 1px solid #2a2a2a; padding-right: 15px; margin-right: 5px; align-items: center; }
-        .pacs-btn { background: #1a1a1a; color: #a3a3a3; border: 1px solid #333; padding: 8px 16px; margin: 0 4px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 1px; }
+        .pacs-btn { background: #1a1a1a; color: #a3a3a3; border: 1px solid #333; padding: 8px 16px; margin: 0 4px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .pacs-btn:hover { background: #333; color: #fff; border-color: #555; }
-        .pacs-btn.active { background: #1c3d5a; color: #fff; border-color: #5c9ce6; box-shadow: 0 0 8px rgba(92, 156, 230, 0.3); }
+        .pacs-btn.active { background: #1c3d5a; color: #fff; border-color: #5c9ce6; }
 
-        /* Main Workspace */
         .pacs-workspace { display: flex; flex: 1; overflow: hidden; }
         
-        /* Sidebar */
         .pacs-sidebar { width: 260px; background-color: #0c0c0c; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; z-index: 8; }
-        .sidebar-title { background: #111; padding: 12px 15px; font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; border-bottom: 1px solid #222; letter-spacing: 1px; }
-        .series-list { padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
-        .series-card { background: #161616; border: 1px solid #222; border-left: 4px solid #5c9ce6; padding: 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .series-card:hover { background: #1f1f1f; }
+        .sidebar-title { background: #111; padding: 12px 15px; font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; border-bottom: 1px solid #222; }
+        .series-list { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+        .series-card { background: #161616; border: 1px solid #222; border-left: 4px solid #5c9ce6; padding: 12px; border-radius: 4px; cursor: pointer; }
         .series-card.active { background: #1e252b; border-color: #5c9ce6; }
         .series-card span { display: block; font-size: 11px; margin-bottom: 5px; color: #999; }
         .series-card .seq { color: #e0e0e0; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
 
-        /* Viewport Container */
         .pacs-viewport-wrapper { flex: 1; position: relative; background-color: #000; display: flex; justify-content: center; align-items: center; }
-        
-        /* The WebGL Canvas */
         canvas { width: 100%; height: 100%; display: block; outline: none; }
 
-        /* Loading Overlay */
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
         .spinner { border: 3px solid #1a1a1a; border-top: 3px solid #5c9ce6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 3px; font-size: 13px; text-transform: uppercase; }
-        .fallback-text { color: #f5a623; font-size: 11px; margin-top: 15px; letter-spacing: 1px; display: none; }
+        .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+        .error-details { color: #ff4444; font-size: 12px; font-family: monospace; max-width: 80%; text-align: center; display: none; background: #220000; padding: 15px; border: 1px solid #ff0000; border-radius: 5px; line-height: 1.5; }
 
-        /* Clinical DICOM Overlays */
         .dicom-text { position: absolute; color: #cfcfcf; font-family: 'Courier New', Courier, monospace; font-size: 13px; pointer-events: none; text-shadow: 1px 1px 3px rgba(0,0,0,1); z-index: 10; }
         .tl { top: 20px; left: 20px; }
         .tr { top: 20px; right: 20px; text-align: right; }
@@ -58,7 +48,6 @@
         .br { bottom: 20px; right: 20px; text-align: right; }
         .dicom-value { color: #f5a623; }
         
-        /* Notification Toast */
         #toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c3d5a; color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.3s; z-index: 200; pointer-events: none; border: 1px solid #5c9ce6; }
     </style>
 </head>
@@ -69,8 +58,6 @@
         <div class="patient-info">
             <div><span>ID:</span> <span class="dicom-value">CT-2026-AVM</span></div>
             <div><span>Name:</span> <span class="dicom-value" id="pt-name">ANONYMIZED</span></div>
-            <div><span>DOB:</span> <span class="dicom-value">--</span></div>
-            <div><span>Sex:</span> <span class="dicom-value">--</span></div>
             <div><span>Study:</span> CT ANGIOGRAPHY (AVM)</div>
         </div>
         <div class="hospital-logo">MED-STATION V4.2</div>
@@ -86,9 +73,6 @@
         <div class="tool-group">
             <button class="pacs-btn" onclick="setView('render')" id="btn-render" style="color: #f5a623; border-color: #553a0b;">3D Render</button>
         </div>
-        <div class="tool-group" style="border:none; color: #666; font-size: 11px;">
-            Action: Scroll (Z-Axis) • Right-Click (Window/Level) • Drag (Pan) • Drop File to View
-        </div>
     </div>
 
     <div class="pacs-workspace">
@@ -96,40 +80,33 @@
             <div class="sidebar-title">Series Explorer</div>
             <div class="series-list">
                 <div class="series-card active" onclick="forceFetch()">
-                    <span class="seq">1. CT_AVM.nii Data</span>
+                    <span class="seq">1. CT_AVM.nii (Main Branch)</span>
                     <span>Modality: CT</span>
-                    <span id="series-status">Status: Auto-Loading...</span>
+                    <span id="series-status" style="color:#5c9ce6;">Status: Fetching...</span>
                 </div>
             </div>
         </div>
 
         <div class="pacs-viewport-wrapper">
             <div id="loading-overlay">
-                <div class="spinner"></div>
-                <div class="loading-text" id="loading-msg">FETCHING 3D VOLUME...</div>
-                <div class="fallback-text" id="fallback-msg">Primary volume failed. Loading fallback template...</div>
+                <div class="spinner" id="spinner"></div>
+                <div class="loading-text" id="loading-msg">PULLING FROM GITHUB MAIN BRANCH...</div>
+                <div class="error-details" id="error-msg"></div>
             </div>
             
             <div id="toast">Volume Loaded Successfully</div>
 
             <div class="dicom-text tl">
                 Inst: <span class="dicom-value">General Med</span><br>
-                Date: 20260427<br>
-                Time: 10:56:24<br>
+                Date: 20260427
             </div>
             <div class="dicom-text tr">
                 Seq: 3D VOLUME<br>
                 Format: <span class="dicom-value">NIfTI</span><br>
-                Source: <span class="dicom-value">GitHub Raw</span><br>
+                Branch: <span class="dicom-value">Main</span><br>
             </div>
-            <div class="dicom-text bl">
-                Color Map: Grayscale<br>
-                Interpolation: Linear
-            </div>
-            <div class="dicom-text br" style="color: #5c9ce6;">
-                INTERACTIVE MODE<br>
-                MPR SYNC ON
-            </div>
+            <div class="dicom-text bl">Color Map: Grayscale</div>
+            <div class="dicom-text br" style="color: #5c9ce6;">INTERACTIVE MODE<br>MPR SYNC ON</div>
 
             <canvas id="gl"></canvas>
         </div>
@@ -137,18 +114,17 @@
 </div>
 
 <script>
-    // 1. Initialize Niivue
     const nv = new niivue.Niivue({
         dragAndDropEnabled: true,
-        backColor: [0, 0, 0, 1], // Pure black background
-        show3Dcrosshair: true,   // Sync crosshairs across views
-        crosshairColor: [0, 0.9, 0, 1], // Clinical bright green crosshairs
-        isColorbar: false,       // Hide colorbar for standard anatomy
-        textHeight: 0.04         // Native niivue text size
+        backColor: [0, 0, 0, 1], 
+        show3Dcrosshair: true,   
+        crosshairColor: [0, 0.9, 0, 1], 
+        isColorbar: false,       
+        textHeight: 0.04         
     });
     
     nv.attachTo('gl');
-    nv.setSliceType(nv.sliceTypeMultiplanar); // Default to Multi-Planar
+    nv.setSliceType(nv.sliceTypeMultiplanar);
 
     function showToast(message) {
         const toast = document.getElementById('toast');
@@ -157,63 +133,59 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
-    // 2. The Auto-Fetch Function pointing to CT_AVM.nii
     async function autoFetchVolume() {
         const loadingOverlay = document.getElementById('loading-overlay');
-        const fallbackMsg = document.getElementById('fallback-msg');
+        const errorMsg = document.getElementById('error-msg');
         const seriesStatus = document.getElementById('series-status');
+        const spinner = document.getElementById('spinner');
+        const loadingMsg = document.getElementById('loading-msg');
         
+        // Reset UI
         loadingOverlay.style.display = 'flex';
-        fallbackMsg.style.display = 'none';
+        loadingOverlay.style.opacity = '1';
+        errorMsg.style.display = 'none';
+        spinner.style.display = 'block';
+        loadingMsg.innerText = "PULLING FROM GITHUB MAIN BRANCH...";
+        loadingMsg.style.color = "#5c9ce6";
         
         try {
-            // ATTEMPT 1: Try to load CT_AVM.nii from GitHub Raw
+            // DIRECT LINK TO MAIN BRANCH IN YOUR REPOSITORY
             const customVolume = [{
                 url: "https://raw.githubusercontent.com/koshurwiki/mri-datasets/main/CT_AVM.nii",
                 name: "CT_AVM",
-                colormap: "gray" // Can also try "bone" or "plasma" for CT scans
+                colormap: "gray"
             }];
             
             await nv.loadVolumes(customVolume);
-            seriesStatus.innerText = "Status: NIfTI Loaded";
             
-            // Hide loading screen smoothly
+            seriesStatus.innerText = "Status: Loaded from Main";
+            seriesStatus.style.color = "#00ff00";
+            
             loadingOverlay.style.opacity = '0';
             setTimeout(() => { 
                 loadingOverlay.style.display = 'none'; 
-                showToast("CT AVM Volume Loaded");
+                showToast("CT_AVM.nii Loaded Successfully");
             }, 500);
 
         } catch (error) {
-            console.warn("Primary NIfTI failed to load. Initiating Fallback protocol.", error);
+            console.error(error);
+            seriesStatus.innerText = "Status: FAILED";
+            seriesStatus.style.color = "#ff4444";
             
-            // ATTEMPT 2: Fallback to a guaranteed working 3D NIfTI file if yours fails
-            fallbackMsg.style.display = 'block';
-            seriesStatus.innerText = "Status: Fallback (NIfTI)";
+            spinner.style.display = 'none';
+            loadingMsg.innerText = "ERROR: FAILED TO FETCH FILE";
+            loadingMsg.style.color = "#ff4444";
             
-            try {
-                const fallbackNifti = [{
-                    url: "https://niivue.github.io/niivue/images/mni152.nii.gz",
-                    name: "mni152",
-                    colormap: "gray"
-                }];
-                await nv.loadVolumes(fallbackNifti);
-                
-                loadingOverlay.style.opacity = '0';
-                setTimeout(() => { 
-                    loadingOverlay.style.display = 'none'; 
-                    showToast("Loaded Standard 3D Brain Template");
-                }, 500);
-                
-            } catch (fallbackError) {
-                document.getElementById('loading-msg').innerText = "SYSTEM ERROR";
-                document.getElementById('loading-msg').style.color = "red";
-                fallbackMsg.innerText = "Check network connection. Renderer halted.";
-            }
+            errorMsg.style.display = 'block';
+            errorMsg.innerHTML = `
+                <strong>Diagnostic Details:</strong><br><br>
+                1. Make sure the file is EXACTLY named <strong>CT_AVM.nii</strong> (case-sensitive) in your repo.<br>
+                2. Check if the file is larger than GitHub's 50MB raw limit. If it is, you MUST zip it into a .nii.gz file.<br><br>
+                <em>Console Error: ${error.message}</em>
+            `;
         }
     }
 
-    // 3. UI Control Functions
     function setView(viewType) {
         document.querySelectorAll('.tool-group .pacs-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btn-' + viewType).classList.add('active');
@@ -226,11 +198,9 @@
     }
 
     function forceFetch() {
-        document.getElementById('loading-overlay').style.opacity = '1';
         autoFetchVolume();
     }
 
-    // 4. Execute Auto-Fetch immediately when page loads
     window.onload = function() {
         autoFetchVolume();
     };
