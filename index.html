@@ -3,274 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical PACS Workstation 22~</title>
+    <title>Minimal 3D Image Viewer</title>
     <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #b3b3b3; overflow: hidden; }
-        .pacs-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #080808; box-sizing: border-box; }
-        
-        .pacs-header { background-color: #0a0a0a; border-bottom: 1px solid #1a1a1a; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 10; }
-        .patient-info { display: flex; gap: 30px; color: #d4d4d4; }
-        .patient-info span { color: #5c9ce6; font-weight: 600; margin-right: 6px; }
-        .hospital-logo { color: #5c9ce6; font-weight: 800; font-size: 16px; letter-spacing: 2px; }
-
-        .pacs-toolbar { background-color: #121212; padding: 10px 20px; display: flex; gap: 15px; border-bottom: 1px solid #000; align-items: center; z-index: 9; flex-wrap: wrap; }
-        .tool-group { display: flex; border-right: 1px solid #2a2a2a; padding-right: 15px; margin-right: 5px; align-items: center; gap: 5px; }
-        .pacs-btn, .pacs-select { background: #1a1a1a; color: #a3a3a3; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .pacs-btn:hover, .pacs-select:hover { background: #333; color: #fff; border-color: #555; }
-        .pacs-btn.active { background: #1c3d5a; color: #fff; border-color: #5c9ce6; }
-        .pacs-btn.action { background: #238636; color: white; border-color: #2ea043; }
-
-        .pacs-workspace { display: flex; flex: 1; overflow: hidden; }
-        .pacs-sidebar { width: 260px; background-color: #0c0c0c; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; z-index: 8; }
-        .sidebar-title { background: #111; padding: 12px 15px; font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; border-bottom: 1px solid #222; }
-        .series-list { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
-        .series-card { background: #161616; border: 1px solid #222; border-left: 4px solid #5c9ce6; padding: 12px; border-radius: 4px; cursor: pointer; }
-        .series-card span { display: block; font-size: 11px; margin-bottom: 5px; color: #999; }
-        .series-card .seq { color: #e0e0e0; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
-
-        .pacs-viewport-wrapper { flex: 1; position: relative; background-color: #000; display: flex; justify-content: center; align-items: center; }
-        canvas { width: 100%; height: 100%; display: block; outline: none; }
-
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.3s; }
-        .spinner { border: 3px solid #1a1a1a; border-top: 3px solid #5c9ce6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
-        
-        .error-box { display: none; background: #2a0000; border: 1px solid #ff4444; padding: 20px; border-radius: 8px; max-width: 80%; text-align: center; }
-        .error-box h3 { color: #ff4444; margin-top: 0; }
-        .error-box p { color: #ddd; font-size: 13px; line-height: 1.5; }
-        
-        .dicom-text { position: absolute; color: #cfcfcf; font-family: 'Courier New', Courier, monospace; font-size: 13px; pointer-events: none; text-shadow: 1px 1px 3px rgba(0,0,0,1); z-index: 10; }
-        .tl { top: 20px; left: 20px; } .tr { top: 20px; right: 20px; text-align: right; }
-        .bl { bottom: 20px; left: 20px; } .br { bottom: 20px; right: 20px; text-align: right; }
-        .dicom-value { color: #f5a623; }
-        
-        #toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c3d5a; color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.3s; z-index: 200; pointer-events: none; border: 1px solid #5c9ce6; }
-        #file-uploader { display: none; }
+        body { 
+            background-color: #121212; 
+            color: white; 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 0;
+        }
+        h2 { color: #5c9ce6; }
+        canvas { 
+            width: 100%; 
+            height: 60vh; 
+            background: #000; 
+            margin-top: 20px; 
+            border: 2px solid #333; 
+            border-radius: 8px;
+        }
+        .btn { 
+            background: #238636; 
+            color: white; 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            font-weight: bold;
+            border: none; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            text-transform: uppercase;
+        }
+        .btn:hover { background: #2ea043; }
+        #error-box { 
+            background: #440000; 
+            color: #ff5555; 
+            padding: 20px; 
+            border: 1px solid red; 
+            border-radius: 5px; 
+            margin-top: 20px; 
+            display: none; 
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div class="pacs-container">
-    <div class="pacs-header">
-        <div class="patient-info">
-            <div><span>ID:</span> <span class="dicom-value">CT-2026-AVM</span></div>
-            <div><span>Name:</span> <span class="dicom-value" id="pt-name">ANONYMIZED</span></div>
-            <div><span>Study:</span> CT ANGIOGRAPHY</div>
-        </div>
-        <div class="hospital-logo">MED-STATION V5.1</div>
-    </div>
+    <h2>Minimal 3D Viewer</h2>
+    <p>Click the button below to open a file from your device.</p>
 
-    <div class="pacs-toolbar">
-        <div class="tool-group">
-            <input type="file" id="file-uploader" accept=".nii,.nii.gz,.dcm">
-            <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">📂 Open Local File</button>
-        </div>
+    <input type="file" id="file-input" style="display: none;" accept=".nii,.nii.gz,.dcm">
+    <button class="btn" onclick="document.getElementById('file-input').click()">📂 Open 3D Image</button>
 
-        <div class="tool-group">
-            <button class="pacs-btn" onclick="setView('axial')" id="btn-axial">Axial</button>
-            <button class="pacs-btn" onclick="setView('coronal')" id="btn-coronal">Coronal</button>
-            <button class="pacs-btn" onclick="setView('sagittal')" id="btn-sagittal">Sagittal</button>
-            <button class="pacs-btn active" onclick="setView('multi')" id="btn-multi">Multi-Planar</button>
-            <button class="pacs-btn" onclick="setView('render')" id="btn-render" style="color: #f5a623;">3D Render</button>
-        </div>
+    <div id="error-box"></div>
 
-        <div class="tool-group">
-            <select class="pacs-select" id="colormap-select" onchange="changeColorMap()">
-                <option value="gray">Grayscale</option>
-                <option value="bone">Bone (CT)</option>
-                <option value="plasma">Plasma Heatmap</option>
-            </select>
-            <button class="pacs-btn" onclick="toggleCrosshair()">⌖ Crosshairs</button>
-            <button class="pacs-btn" onclick="resetView()">↺ Reset View</button>
-        </div>
-    </div>
+    <canvas id="gl"></canvas>
 
-    <div class="pacs-workspace">
-        <div class="pacs-sidebar">
-            <div class="sidebar-title">Series Explorer</div>
-            <div class="series-list">
-                <div class="series-card active">
-                    <span class="seq">1. CT_AVM.nii</span>
-                    <span>Modality: CT</span>
-                    <span id="series-status" style="color:#5c9ce6;">Status: Initializing...</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="pacs-viewport-wrapper">
-            <div id="loading-overlay">
-                <div class="spinner" id="spinner"></div>
-                <div class="loading-text" id="loading-msg">INITIALIZING 3D ENGINE...</div>
-                
-                <div class="error-box" id="error-box">
-                    <h3>❌ WebGL Engine Failed</h3>
-                    <p id="error-details">Your device or browser blocked the 3D graphics renderer. This usually happens on mobile devices due to lack of graphics memory.</p>
-                    <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">Try Opening a Local File</button>
-                </div>
-            </div>
-            
-            <div id="toast">Ready</div>
-
-            <div class="dicom-text tl">Inst: General Med<br>Date: 20260427</div>
-            <div class="dicom-text tr">Format: <span class="dicom-value" id="overlay-format">NIfTI</span><br>Map: <span class="dicom-value" id="overlay-map">Grayscale</span></div>
-            <div class="dicom-text bl">Action: Left-Click & Drag to Pan<br>Right-Click & Drag for Contrast</div>
-            <div class="dicom-text br" style="color: #5c9ce6;">INTERACTIVE MODE<br>READY</div>
-
-            <canvas id="gl"></canvas>
-        </div>
-    </div>
-</div>
-
-<script>
-    let nv;
-
-    function showToast(message) {
-        const toast = document.getElementById('toast');
-        toast.innerText = message;
-        toast.style.opacity = '1';
-        setTimeout(() => { toast.style.opacity = '0'; }, 3000);
-    }
-
-    function showFatalError(details) {
-        document.getElementById('spinner').style.display = 'none';
-        document.getElementById('loading-msg').style.display = 'none';
-        document.getElementById('error-box').style.display = 'block';
-        if (details) {
-            document.getElementById('error-details').innerText = details;
-        }
-        document.getElementById('series-status').innerText = "Status: ENGINE CRASH";
-        document.getElementById('series-status').style.color = "#ff4444";
-    }
-
-    // 1. SAFE INITIALIZATION
-    try {
-        // We set isHighResolution to false to prevent mobile browsers from crashing
-        nv = new niivue.Niivue({
-            dragAndDropEnabled: false, // Turned off to prevent browser download conflicts
-            backColor: [0, 0, 0, 1], 
-            show3Dcrosshair: true,   
-            crosshairColor: [0, 0.9, 0, 1], 
-            isColorbar: false,
-            isHighResolutionCapable: false 
-        });
+    <script>
+        // 1. HARDWARE DIAGNOSTIC
+        // Check if the device's graphics card supports WebGL2
+        const canvas = document.getElementById('gl');
+        const glContext = canvas.getContext('webgl2');
         
-        nv.attachTo('gl');
-        nv.setSliceType(nv.sliceTypeMultiplanar);
-    } catch (e) {
-        showFatalError("Your browser does not support WebGL2, which is required to view 3D medical images. Try using Google Chrome on a computer.");
-        console.error(e);
-    }
-
-    // 2. TOOLBAR CONTROLS
-    function setView(viewType) {
-        if(!nv) return;
-        document.querySelectorAll('.tool-group .pacs-btn').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('btn-' + viewType).classList.add('active');
-
-        if (viewType === 'axial') nv.setSliceType(nv.sliceTypeAxial);
-        if (viewType === 'coronal') nv.setSliceType(nv.sliceTypeCoronal);
-        if (viewType === 'sagittal') nv.setSliceType(nv.sliceTypeSagittal);
-        if (viewType === 'multi') nv.setSliceType(nv.sliceTypeMultiplanar);
-        if (viewType === 'render') nv.setSliceType(nv.sliceTypeRender);
-    }
-
-    function changeColorMap() {
-        if(!nv) return;
-        const selectedMap = document.getElementById('colormap-select').value;
-        document.getElementById('overlay-map').innerText = selectedMap;
-        if (nv.volumes.length > 0) {
-            nv.volumes[0].colormap = selectedMap;
-            nv.updateGLVolume();
-        }
-    }
-
-    let crosshairVisible = true;
-    function toggleCrosshair() {
-        if(!nv) return;
-        crosshairVisible = !crosshairVisible;
-        nv.setCrosshairWidth(crosshairVisible ? 1 : 0);
-    }
-
-    function resetView() {
-        if(!nv || nv.volumes.length === 0) return;
-        nv.resetScene();
-        nv.volumes[0].cal_min = nv.volumes[0].global_min;
-        nv.volumes[0].cal_max = nv.volumes[0].global_max;
-        nv.updateGLVolume();
-        showToast("View Reset");
-    }
-
-    // 3. FILE LOADERS
-    document.getElementById('file-uploader').addEventListener('change', async function(e) {
-        if(!nv) {
-            alert("The 3D engine failed to start. Cannot load file.");
-            return;
-        }
-        
-        const file = e.target.files[0];
-        if (file) {
-            // Force the error screen to hide if it was showing
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('series-status').innerText = "Status: LOCAL FILE";
-            document.getElementById('series-status').style.color = "#00ff00";
-            document.getElementById('pt-name').innerText = file.name;
-            
+        if (!glContext) {
+            // If WebGL2 is missing, show a fatal error
+            const errorBox = document.getElementById('error-box');
+            errorBox.style.display = 'block';
+            errorBox.innerHTML = "❌ HARDWARE ERROR: Your current web browser or device does not support WebGL2.<br><br>3D medical rendering is physically impossible on this specific device/browser. Please try opening this page on a desktop computer (Chrome/Edge).";
+        } else {
+            // 2. INITIALIZE VIEWER
             try {
-                await nv.loadFromFile(file);
-                showToast("File Loaded Successfully");
-            } catch (err) {
-                alert("Renderer Error: Ensure it is a valid medical format.");
+                const nv = new niivue.Niivue({
+                    backColor: [0, 0, 0, 1],
+                    show3Dcrosshair: true
+                });
+                
+                nv.attachTo('gl');
+                nv.setSliceType(nv.sliceTypeMultiplanar); // Shows all 3 planes (Axial, Coronal, Sagittal)
+
+                // 3. HANDLE FILE SELECTION
+                document.getElementById('file-input').addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        try {
+                            // Clear previous errors
+                            document.getElementById('error-box').style.display = 'none';
+                            
+                            // Load the local file
+                            await nv.loadFromFile(file);
+                        } catch (err) {
+                            const errorBox = document.getElementById('error-box');
+                            errorBox.style.display = 'block';
+                            errorBox.innerText = "❌ ERROR: Could not read file. Ensure it is a valid .nii or .nii.gz file.";
+                        }
+                    }
+                    // Reset the file input so you can select the same file again if needed
+                    e.target.value = '';
+                });
+
+            } catch (e) {
+                const errorBox = document.getElementById('error-box');
+                errorBox.style.display = 'block';
+                errorBox.innerText = "❌ ENGINE CRASH: " + e.message;
             }
         }
-        e.target.value = ''; 
-    });
-
-    async function startApp() {
-        if (!nv) return; // Stop if WebGL failed
-        
-        document.getElementById('loading-msg').innerText = "PULLING FROM GITHUB...";
-        
-        try {
-            const customVolume = [{
-                url: "https://raw.githubusercontent.com/koshurwiki/mri-datasets/main/CT_AVM.nii",
-                name: "CT_AVM",
-                colormap: "gray"
-            }];
-            
-            await nv.loadVolumes(customVolume);
-            
-            document.getElementById('series-status').innerText = "Status: Online Sync OK";
-            document.getElementById('series-status').style.color = "#00ff00";
-            
-            document.getElementById('loading-overlay').style.opacity = '0';
-            setTimeout(() => { document.getElementById('loading-overlay').style.display = 'none'; }, 300);
-
-        } catch (error) {
-            console.warn("GitHub fetch failed, loading diagnostic test image instead...");
-            
-            // If the custom URL fails, smoothly fallback to a tiny image so the UI still works
-            try {
-                await nv.loadVolumes([{url: "https://niivue.github.io/niivue/images/mni152.nii.gz"}]);
-                document.getElementById('series-status').innerText = "Status: DIAGNOSTIC TEST";
-                document.getElementById('series-status').style.color = "#f5a623";
-                document.getElementById('overlay-format').innerText = "TEST FILE";
-                
-                document.getElementById('loading-overlay').style.opacity = '0';
-                setTimeout(() => { document.getElementById('loading-overlay').style.display = 'none'; }, 300);
-                showToast("GitHub URL failed. Loaded Test Data.");
-                
-            } catch(fallbackErr) {
-                showFatalError("Network error or file size too large for this browser to handle.");
-            }
-        }
-    }
-
-    window.onload = function() {
-        startApp();
-    };
-</script>
+    </script>
 
 </body>
 </html>
