@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical MRI PACS Workstation</title>
+    <title>Clinical PACS Workstation - CT AVM</title>
     <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
     <style>
         /* True Clinical Dark Mode */
@@ -67,11 +67,11 @@
 <div class="pacs-container">
     <div class="pacs-header">
         <div class="patient-info">
-            <div><span>ID:</span> <span class="dicom-value">MR-2026-0427</span></div>
-            <div><span>Name:</span> <span class="dicom-value" id="pt-name">DOE^JOHN</span></div>
-            <div><span>DOB:</span> <span class="dicom-value">1980-01-01</span></div>
-            <div><span>Sex:</span> <span class="dicom-value">M</span></div>
-            <div><span>Study:</span> MRI BRAIN W/O CONTRAST</div>
+            <div><span>ID:</span> <span class="dicom-value">CT-2026-AVM</span></div>
+            <div><span>Name:</span> <span class="dicom-value" id="pt-name">ANONYMIZED</span></div>
+            <div><span>DOB:</span> <span class="dicom-value">--</span></div>
+            <div><span>Sex:</span> <span class="dicom-value">--</span></div>
+            <div><span>Study:</span> CT ANGIOGRAPHY (AVM)</div>
         </div>
         <div class="hospital-logo">MED-STATION V4.2</div>
     </div>
@@ -96,8 +96,8 @@
             <div class="sidebar-title">Series Explorer</div>
             <div class="series-list">
                 <div class="series-card active" onclick="forceFetch()">
-                    <span class="seq">1. Primary Scan Data</span>
-                    <span>Modality: MR</span>
+                    <span class="seq">1. CT_AVM.nii Data</span>
+                    <span>Modality: CT</span>
                     <span id="series-status">Status: Auto-Loading...</span>
                 </div>
             </div>
@@ -106,26 +106,25 @@
         <div class="pacs-viewport-wrapper">
             <div id="loading-overlay">
                 <div class="spinner"></div>
-                <div class="loading-text" id="loading-msg">FETCHING SECURE DATASET...</div>
-                <div class="fallback-text" id="fallback-msg">Primary DICOM failed or is 2D. Loading 3D NIfTI fallback...</div>
+                <div class="loading-text" id="loading-msg">FETCHING 3D VOLUME...</div>
+                <div class="fallback-text" id="fallback-msg">Primary volume failed. Loading fallback template...</div>
             </div>
             
-            <div id="toast">Fallback Volume Loaded</div>
+            <div id="toast">Volume Loaded Successfully</div>
 
             <div class="dicom-text tl">
                 Inst: <span class="dicom-value">General Med</span><br>
                 Date: 20260427<br>
-                Time: 10:12:03<br>
+                Time: 10:56:24<br>
             </div>
             <div class="dicom-text tr">
-                Seq: 3D MPRAGE<br>
-                TR: <span class="dicom-value">1900.0</span><br>
-                TE: <span class="dicom-value">2.2</span><br>
-                Thk: <span class="dicom-value">1.0 mm</span>
+                Seq: 3D VOLUME<br>
+                Format: <span class="dicom-value">NIfTI</span><br>
+                Source: <span class="dicom-value">GitHub Raw</span><br>
             </div>
             <div class="dicom-text bl">
-                FOV: 256x256<br>
-                Matrix: 256x256
+                Color Map: Grayscale<br>
+                Interpolation: Linear
             </div>
             <div class="dicom-text br" style="color: #5c9ce6;">
                 INTERACTIVE MODE<br>
@@ -138,7 +137,7 @@
 </div>
 
 <script>
-    // 1. Initialize Niivue with high-end clinical settings
+    // 1. Initialize Niivue
     const nv = new niivue.Niivue({
         dragAndDropEnabled: true,
         backColor: [0, 0, 0, 1], // Pure black background
@@ -158,7 +157,7 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
-    // 2. The Auto-Fetch Function with Built-in Fallback
+    // 2. The Auto-Fetch Function pointing to CT_AVM.nii
     async function autoFetchVolume() {
         const loadingOverlay = document.getElementById('loading-overlay');
         const fallbackMsg = document.getElementById('fallback-msg');
@@ -168,27 +167,29 @@
         fallbackMsg.style.display = 'none';
         
         try {
-            // ATTEMPT 1: Try to load your custom DICOM from GitHub Raw
-            const customDicom = [{
-                url: "https://raw.githubusercontent.com/koshurwiki/mri-datasets/main/scan.dcm",
-                name: "scan_dcm",
-                colormap: "gray"
+            // ATTEMPT 1: Try to load CT_AVM.nii from GitHub Raw
+            const customVolume = [{
+                url: "https://raw.githubusercontent.com/koshurwiki/mri-datasets/main/CT_AVM.nii",
+                name: "CT_AVM",
+                colormap: "gray" // Can also try "bone" or "plasma" for CT scans
             }];
             
-            await nv.loadVolumes(customDicom);
-            seriesStatus.innerText = "Status: DICOM Loaded";
+            await nv.loadVolumes(customVolume);
+            seriesStatus.innerText = "Status: NIfTI Loaded";
             
             // Hide loading screen smoothly
             loadingOverlay.style.opacity = '0';
-            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+            setTimeout(() => { 
+                loadingOverlay.style.display = 'none'; 
+                showToast("CT AVM Volume Loaded");
+            }, 500);
 
         } catch (error) {
-            console.warn("Primary DICOM failed to load. Initiating Fallback protocol.", error);
+            console.warn("Primary NIfTI failed to load. Initiating Fallback protocol.", error);
             
-            // ATTEMPT 2: Fallback to a guaranteed working 3D NIfTI file
+            // ATTEMPT 2: Fallback to a guaranteed working 3D NIfTI file if yours fails
             fallbackMsg.style.display = 'block';
             seriesStatus.innerText = "Status: Fallback (NIfTI)";
-            document.getElementById('pt-name').innerText = "TEMPLATE^MNI152";
             
             try {
                 const fallbackNifti = [{
@@ -205,7 +206,6 @@
                 }, 500);
                 
             } catch (fallbackError) {
-                // If even the fallback fails, show an error.
                 document.getElementById('loading-msg').innerText = "SYSTEM ERROR";
                 document.getElementById('loading-msg').style.color = "red";
                 fallbackMsg.innerText = "Check network connection. Renderer halted.";
