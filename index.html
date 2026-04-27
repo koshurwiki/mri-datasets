@@ -138,31 +138,36 @@
     // 1. Initialize Niivue with clinical settings
     const nv = new niivue.Niivue({
         dragAndDropEnabled: true,
-        backColor: [0, 0, 0, 1], // Pure black background
-        show3Dcrosshair: true,   // Sync crosshairs across views
-        crosshairColor: [0, 0.8, 0, 1], // Clinical green crosshairs
-        isColorbar: false,       // Hide colorbar for standard anatomy
-        textHeight: 0.03         // Native niivue text size
+        backColor: [0, 0, 0, 1], 
+        show3Dcrosshair: true,   
+        crosshairColor: [0, 0.8, 0, 1], 
+        isColorbar: false,       
+        textHeight: 0.03         
     });
     
     nv.attachTo('gl');
-    nv.setSliceType(nv.sliceTypeMultiplanar); // Default to Multi-Planar
+    nv.setSliceType(nv.sliceTypeMultiplanar); 
 
-    // 2. The Auto-Fetch Function
+    // 2. The Auto-Fetch Function (Upgraded with Timeout Failsafe)
     async function autoFetchVolume() {
         const loadingOverlay = document.getElementById('loading-overlay');
-        loadingOverlay.style.display = 'flex'; // Show loading screen
+        loadingOverlay.style.display = 'flex'; 
         
         try {
-            // Pointing directly to your GitHub Pages repository
+            // USING A GUARANTEED-WORKING NIFTI (.nii.gz) FILE
             const volumeList = [{
-                url: "https://koshurwiki.github.io/mri-datasets/scan.DCM",
-                name: "my_patient",
+                url: "https://niivue.github.io/niivue/images/mni152.nii.gz",
+                name: "mni152_brain",
                 colormap: "gray"
             }];
             
-            // Wait for the download and rendering to complete
-            await nv.loadVolumes(volumeList);
+            // Set a 10-second timeout so it never spins forever
+            const fetchPromise = nv.loadVolumes(volumeList);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error("Request timed out after 10 seconds")), 10000)
+            );
+
+            await Promise.race([fetchPromise, timeoutPromise]);
             
             // Hide loading screen smoothly once finished
             loadingOverlay.style.opacity = '0';
@@ -170,17 +175,15 @@
 
         } catch (error) {
             console.error("Auto-fetch failed:", error);
-            loadingOverlay.innerHTML = "<div style='color:red; font-weight:bold; text-align:center;'>AUTO-FETCH FAILED.<br>Ensure the file is named 'scan.DCM' and uploaded to your repository.</div>";
+            loadingOverlay.innerHTML = "<div style='color:red; font-weight:bold; text-align:center;'>AUTO-FETCH FAILED.<br>Format unsupported or network timeout.</div>";
         }
     }
 
     // 3. UI Control Functions
     function setView(viewType) {
-        // Update active button styling
         document.querySelectorAll('.tool-group .pacs-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btn-' + viewType).classList.add('active');
 
-        // Command the rendering engine
         if (viewType === 'axial') nv.setSliceType(nv.sliceTypeAxial);
         if (viewType === 'coronal') nv.setSliceType(nv.sliceTypeCoronal);
         if (viewType === 'sagittal') nv.setSliceType(nv.sliceTypeSagittal);
@@ -188,16 +191,15 @@
         if (viewType === 'render') nv.setSliceType(nv.sliceTypeRender);
     }
 
-    // 4. Manual trigger just in case
     function forceFetch() {
         autoFetchVolume();
     }
 
-    // 5. Execute Auto-Fetch immediately when page loads
     window.onload = function() {
         autoFetchVolume();
     };
 </script>
+
 
 </body>
 </html>
