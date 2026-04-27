@@ -91,9 +91,9 @@
             <div class="sidebar-title">Series Explorer</div>
             <div class="series-list">
                 <div class="series-card active" onclick="forceFetch()">
-                    <span class="seq">1. T1 MPRAGE High-Res</span>
+                    <span class="seq">1. Main Localizer</span>
                     <span>Modality: MR</span>
-                    <span>Images: 256</span>
+                    <span>Status: Auto-Load</span>
                 </div>
                 <div class="series-card" style="opacity: 0.5;">
                     <span class="seq">2. T2 FLAIR Axial</span>
@@ -154,10 +154,10 @@
         loadingOverlay.style.display = 'flex'; // Show loading screen
         
         try {
-            // Highly reliable NIfTI URL from Niivue's official repository
+            // Pointing directly to your GitHub Pages repository
             const volumeList = [{
-                url: "https://niivue.github.io/niivue/images/mni152.nii.gz",
-                name: "mni152",
+                url: "https://koshurwiki.github.io/mri-datasets/scan.dcm",
+                name: "my_patient",
                 colormap: "gray"
             }];
             
@@ -170,7 +170,7 @@
 
         } catch (error) {
             console.error("Auto-fetch failed:", error);
-            loadingOverlay.innerHTML = "<div style='color:red; font-weight:bold;'>AUTO-FETCH FAILED. CHECK NETWORK C.O.R.S.</div>";
+            loadingOverlay.innerHTML = "<div style='color:red; font-weight:bold; text-align:center;'>AUTO-FETCH FAILED.<br>Ensure the file is named 'scan.dcm' and uploaded to your repository.</div>";
         }
     }
 
