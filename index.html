@@ -39,9 +39,8 @@
         .spinner { border: 3px solid #1a1a1a; border-top: 3px solid #5c9ce6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
+        
         .error-details { color: #ff4444; font-size: 12px; font-family: monospace; max-width: 80%; text-align: center; display: none; background: #220000; padding: 15px; border: 1px solid #ff0000; border-radius: 5px; line-height: 1.5; }
-
-        /* New buttons for error state */
         .error-actions { display: flex; gap: 15px; margin-top: 20px; }
         .action-btn { background: #5c9ce6; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
         .action-btn:hover { background: #4a8ad4; }
@@ -109,15 +108,8 @@
             
             <div id="toast">Volume Loaded Successfully</div>
 
-            <div class="dicom-text tl">
-                Inst: <span class="dicom-value">General Med</span><br>
-                Date: 20260427
-            </div>
-            <div class="dicom-text tr">
-                Seq: 3D VOLUME<br>
-                Format: <span class="dicom-value">NIfTI</span><br>
-                Branch: <span class="dicom-value">Main</span><br>
-            </div>
+            <div class="dicom-text tl">Inst: <span class="dicom-value">General Med</span><br>Date: 20260427</div>
+            <div class="dicom-text tr">Seq: 3D VOLUME<br>Format: <span class="dicom-value">NIfTI</span><br>Branch: <span class="dicom-value">Main</span><br></div>
             <div class="dicom-text bl">Color Map: Grayscale</div>
             <div class="dicom-text br" style="color: #5c9ce6;">INTERACTIVE MODE<br>MPR SYNC ON</div>
 
@@ -146,7 +138,38 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
-    // Function to hide the black screen so drag-and-drop works
+    // =========================================================================
+    // CRITICAL FIX: PREVENT BROWSER FROM DOWNLOADING FILES GLOBALLY
+    // =========================================================================
+    window.addEventListener("dragover", function(e) {
+        e.preventDefault(); // Stop default browser behavior
+        e.stopPropagation();
+    });
+
+    window.addEventListener("drop", async function(e) {
+        e.preventDefault(); // STOP THE DOWNLOAD
+        e.stopPropagation();
+        
+        if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+            // Instantly clear the black loading/error screen
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('series-status').innerText = "Status: LOCAL MANUAL DROP";
+            document.getElementById('series-status').style.color = "#f5a623";
+            document.getElementById('pt-name').innerText = "LOCAL^FILE";
+            
+            try {
+                // Feed the dropped file directly to the medical renderer
+                const file = e.dataTransfer.files[0];
+                await nv.loadFromFile(file);
+                showToast("Local File Rendered Successfully");
+            } catch (error) {
+                console.error(error);
+                showToast("Error reading file format.");
+            }
+        }
+    });
+    // =========================================================================
+
     function enableManualMode() {
         document.getElementById('loading-overlay').style.display = 'none';
         document.getElementById('series-status').innerText = "Status: MANUAL MODE";
@@ -154,7 +177,6 @@
         showToast("Drag and Drop Enabled - Drop file anywhere");
     }
 
-    // Function to load a guaranteed working file to prove the system isn't broken
     async function loadDiagnosticTest() {
         document.getElementById('error-msg').style.display = 'none';
         document.getElementById('error-actions').style.display = 'none';
@@ -180,7 +202,6 @@
         const loadingMsg = document.getElementById('loading-msg');
         const errorActions = document.getElementById('error-actions');
         
-        // Reset UI
         loadingOverlay.style.display = 'flex';
         loadingOverlay.style.opacity = '1';
         errorMsg.style.display = 'none';
@@ -190,7 +211,6 @@
         loadingMsg.style.color = "#5c9ce6";
         
         try {
-            // DIRECT LINK TO MAIN BRANCH IN YOUR REPOSITORY
             const customVolume = [{
                 url: "https://raw.githubusercontent.com/koshurwiki/mri-datasets/main/CT_AVM.nii",
                 name: "CT_AVM",
@@ -225,7 +245,6 @@
                 <em>Console Error: ${error.message}</em>
             `;
             
-            // Show the buttons so you can bypass the error screen!
             errorActions.style.display = 'flex';
         }
     }
