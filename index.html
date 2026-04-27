@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical MRI Workstation Simulator</title>
+    <title>Advanced 3D MRI Workstation (NIfTI/DICOM)</title>
+    <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #000; /* Dark room environment */
+            background-color: #000;
             color: #d1d5db;
             margin: 0;
             padding: 20px;
@@ -22,7 +23,7 @@
             border-radius: 8px;
             border: 1px solid #374151;
             box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
         }
         .controls-panel {
@@ -35,237 +36,115 @@
             border-radius: 6px;
         }
         .screen-panel {
-            flex: 2;
+            flex: 2.5;
             display: flex;
             flex-direction: column;
-        }
-        h2 { margin-top: 0; color: #60a5fa; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #374151; padding-bottom: 10px;}
-        
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        label { font-size: 0.85rem; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
-        select, button, input[type="range"] {
-            padding: 8px;
-            border-radius: 4px;
+            background-color: #000;
+            border-radius: 6px;
             border: 1px solid #4b5563;
-            background-color: #111827;
-            color: #fff;
-            font-size: 0.95rem;
+            position: relative;
         }
-        button {
-            background-color: #2563eb;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 10px;
-            padding: 12px;
-        }
+        h2 { margin-top: 0; color: #60a5fa; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid #374151; padding-bottom: 10px;}
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.85rem; font-weight: bold; color: #9ca3af; text-transform: uppercase; }
+        select, button { padding: 8px; border-radius: 4px; border: 1px solid #4b5563; background-color: #111827; color: #fff; }
+        button { background-color: #2563eb; font-weight: bold; cursor: pointer; padding: 12px; transition: 0.2s;}
         button:hover { background-color: #1d4ed8; }
         button:disabled { background-color: #374151; color: #6b7280; cursor: not-allowed; }
         
-        .screen {
-            background-color: #000;
-            flex-grow: 1;
-            min-height: 450px;
-            border-radius: 6px;
-            border: 1px solid #4b5563;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .screen img {
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-            filter: brightness(100%) contrast(100%); /* Default Window/Level */
+        /* The WebGL Canvas replaces the img tag */
+        canvas {
+            width: 100%;
+            height: 500px;
+            display: block;
+            outline: none;
         }
         
-        .dicom-overlay {
-            position: absolute;
+        .instructions {
+            font-size: 0.8rem;
             color: #fbbf24;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            text-shadow: 1px 1px 0 #000;
-            pointer-events: none;
+            background: #451a03;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            line-height: 1.4;
         }
-        .overlay-top-left { top: 10px; left: 10px; }
-        .overlay-top-right { top: 10px; right: 10px; text-align: right; }
-        .overlay-bottom-left { bottom: 10px; left: 10px; }
-        .overlay-bottom-right { bottom: 10px; right: 10px; text-align: right; }
-        
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .slider-container input { flex-grow: 1; }
-        
     </style>
 </head>
 <body>
 
     <div class="workstation">
         <div class="controls-panel">
-            <h2>Acquisition Console</h2>
+            <h2>3D Acquisition Console</h2>
             
             <div class="control-group">
-                <label>Select Patient</label>
-                <select id="patient-select">
-                    <option value="pt_head">Patient 001 - Brain (Axial/Sagittal)</option>
-                    <option value="pt_spine">Patient 002 - Cervical Spine</option>
+                <label>Select Dataset (NIfTI Format)</label>
+                <select id="dataset-select">
+                    <option value="https://niivue.github.io/niivue/images/mni152.nii.gz">High-Res Brain Template (MNI152)</option>
+                    <option value="https://niivue.github.io/niivue/images/hippo.nii.gz">High-Res Hippocampus</option>
                 </select>
             </div>
             
-            <div class="control-group">
-                <label>Sequence</label>
-                <select id="sequence-select">
-                    <option value="t2">T2 Weighted (Fluid Bright)</option>
-                    <option value="t1">T1 Weighted (Anatomy)</option>
-                </select>
-            </div>
-            
-            <button id="scan-btn" onclick="startScan()">INITIATE SEQUENCE</button>
+            <button id="scan-btn" onclick="startVolumetricScan()">LOAD 3D VOLUME</button>
 
-            <h2 style="margin-top: 30px;">Image Processing</h2>
-            
-            <div class="control-group">
-                <label>Manual Slice Navigator</label>
-                <input type="range" id="slice-slider" min="0" max="0" value="0" disabled oninput="updateSliceManually()">
+            <div class="instructions">
+                <strong>RADIOLOGIST CONTROLS:</strong><br>
+                • <strong>Scroll Wheel:</strong> Move through slices (Z-axis).<br>
+                • <strong>Right-Click & Drag:</strong> Adjust Window/Level (Contrast/Brightness).<br>
+                • <strong>Left-Click & Drag:</strong> Pan the image.<br>
+                • <strong>Drag & Drop:</strong> You can drag a .dcm or .nii file straight from your computer onto the screen to view it!
             </div>
-
-            <div class="control-group">
-                <label>Window (Contrast): <span id="contrast-val">100</span>%</label>
-                <div class="slider-container">
-                    <input type="range" id="contrast-slider" min="50" max="250" value="100" oninput="updateFilters()">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label>Level (Brightness): <span id="brightness-val">100</span>%</label>
-                <div class="slider-container">
-                    <input type="range" id="brightness-slider" min="20" max="200" value="100" oninput="updateFilters()">
-                </div>
-            </div>
-            
-            <button onclick="resetFilters()" style="background-color: #4b5563; padding: 8px;">Reset Window/Level</button>
         </div>
 
         <div class="screen-panel">
-            <div class="screen">
-                <div class="dicom-overlay overlay-top-left" id="dicom-tl">
-                    ID: -----------<br>
-                    NAME: ---------<br>
-                    DOB: ----------
-                </div>
-                <div class="dicom-overlay overlay-top-right" id="dicom-tr">
-                    SEQ: ---------<br>
-                    TR: ---- TE: ---<br>
-                    THK: 5.0mm
-                </div>
-                <div class="dicom-overlay overlay-bottom-left" id="dicom-bl">
-                    WL: <span id="overlay-wl">100/100</span>
-                </div>
-                <div class="dicom-overlay overlay-bottom-right" id="dicom-br">
-                    SLICE: <span id="overlay-slice">- / -</span><br>
-                    <span id="scan-status" style="color: #ef4444; font-weight: bold;">SYSTEM IDLE</span>
-                </div>
-
-                <img id="mri-image" src="https://upload.wikimedia.org/wikipedia/commons/0/05/Empty_set.svg" style="opacity: 0.2;" alt="MRI Display" referrerpolicy="no-referrer">
-            </div>
+            <canvas id="gl-canvas"></canvas>
         </div>
     </div>
 
     <script>
-        // Database using real open-source medical images from Wikimedia Commons
-        const scanDatabase = {
-            "pt_head": [
-                "https://upload.wikimedia.org/wikipedia/commons/e/e7/Normal_axial_T2-weighted_MR_image_of_the_brain.jpg",
-                "https://upload.wikimedia.org/wikipedia/commons/c/c7/T2_axial_MRI_of_the_brain.jpg",
-                "https://upload.wikimedia.org/wikipedia/commons/d/d4/MRI_of_the_brain_showing_normal_anatomy.jpg",
-                "https://upload.wikimedia.org/wikipedia/commons/8/87/MRI_head_sagittal.jpg",
-                "https://upload.wikimedia.org/wikipedia/commons/a/a1/Normal_sagittal_T1-weighted_MR_image_of_the_brain.jpg"
-            ],
-            "pt_spine": [
-                "https://upload.wikimedia.org/wikipedia/commons/f/f6/MRI_of_cervical_spine_-_sagittal.png",
-                "https://upload.wikimedia.org/wikipedia/commons/0/03/Normal_cervical_spine_MRI.jpg",
-                "https://upload.wikimedia.org/wikipedia/commons/f/f6/MRI_of_cervical_spine_-_sagittal.png" 
-            ]
-        };
-
-        const imageElement = document.getElementById('mri-image');
-        const scanBtn = document.getElementById('scan-btn');
-        const sliceSlider = document.getElementById('slice-slider');
-        const statusText = document.getElementById('scan-status');
+        // Initialize the Niivue renderer
+        const nv = new niivue.Niivue({
+            dragAndDropEnabled: true, // Allows dragging .dcm or .nii files from desktop
+            backColor: [0, 0, 0, 1],  // Black background
+            show3Dcrosshair: true,
+            isColorbar: true
+        });
         
-        let currentImages = [];
-        let scanInterval;
+        // Attach the renderer to our canvas
+        nv.attachTo('gl-canvas');
 
-        function startScan() {
-            const patientKey = document.getElementById('patient-select').value;
-            const sequenceKey = document.getElementById('sequence-select').value.toUpperCase();
+        // Set default view to Axial
+        nv.setSliceType(nv.sliceTypeAxial);
+
+        async function startVolumetricScan() {
+            const scanBtn = document.getElementById('scan-btn');
+            const fileUrl = document.getElementById('dataset-select').value;
             
-            currentImages = scanDatabase[patientKey];
-            imageElement.style.opacity = "1"; 
-
-            document.getElementById('dicom-tl').innerHTML = `ID: ${patientKey.toUpperCase()}<br>NAME: ANONYMIZED<br>DATE: ${new Date().toISOString().split('T')[0]}`;
-            document.getElementById('dicom-tr').innerHTML = `SEQ: ${sequenceKey}<br>TR: 4500 TE: 100<br>THK: 5.0mm`;
-
             scanBtn.disabled = true;
-            sliceSlider.disabled = true;
-            
-            let currentSlice = 0;
-            statusText.innerText = "ACQUIRING...";
-            statusText.style.color = "#ef4444"; 
+            scanBtn.innerText = "FETCHING VOLUME...";
 
-            scanInterval = setInterval(() => {
-                imageElement.src = currentImages[currentSlice];
-                document.getElementById('overlay-slice').innerText = `${currentSlice + 1} / ${currentImages.length}`;
+            try {
+                // Clear the current canvas
+                nv.volumes = [];
                 
-                currentSlice++;
+                // Fetch and load the NIfTI volumetric data
+                await nv.loadVolumes([{
+                    url: fileUrl,
+                    name: 'patient_volume'
+                }]);
+                
+                scanBtn.innerText = "VOLUME LOADED";
+                setTimeout(() => {
+                    scanBtn.disabled = false;
+                    scanBtn.innerText = "LOAD 3D VOLUME";
+                }, 2000);
 
-                if (currentSlice >= currentImages.length) {
-                    clearInterval(scanInterval);
-                    finishScan();
-                }
-            }, 1000); 
-        }
-
-        function finishScan() {
-            statusText.innerText = "READY (VIEW MODE)";
-            statusText.style.color = "#39ff14"; 
-            scanBtn.disabled = false;
-            
-            sliceSlider.disabled = false;
-            sliceSlider.max = currentImages.length - 1;
-            sliceSlider.value = currentImages.length - 1; 
-        }
-
-        function updateSliceManually() {
-            const sliceIndex = sliceSlider.value;
-            imageElement.src = currentImages[sliceIndex];
-            document.getElementById('overlay-slice').innerText = `${parseInt(sliceIndex) + 1} / ${currentImages.length}`;
-        }
-
-        function updateFilters() {
-            const brightness = document.getElementById('brightness-slider').value;
-            const contrast = document.getElementById('contrast-slider').value;
-            
-            document.getElementById('brightness-val').innerText = brightness;
-            document.getElementById('contrast-val').innerText = contrast;
-            document.getElementById('overlay-wl').innerText = `${contrast}/${brightness}`;
-
-            imageElement.style.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-        }
-
-        function resetFilters() {
-            document.getElementById('brightness-slider').value = 100;
-            document.getElementById('contrast-slider').value = 100;
-            updateFilters();
+            } catch (error) {
+                alert("Error fetching volume. It might be a CORS restriction or a bad network connection.");
+                console.error(error);
+                scanBtn.disabled = false;
+                scanBtn.innerText = "LOAD 3D VOLUME";
+            }
         }
     </script>
 </body>
