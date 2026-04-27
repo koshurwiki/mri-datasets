@@ -41,6 +41,13 @@
         .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
         .error-details { color: #ff4444; font-size: 12px; font-family: monospace; max-width: 80%; text-align: center; display: none; background: #220000; padding: 15px; border: 1px solid #ff0000; border-radius: 5px; line-height: 1.5; }
 
+        /* New buttons for error state */
+        .error-actions { display: flex; gap: 15px; margin-top: 20px; }
+        .action-btn { background: #5c9ce6; color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; }
+        .action-btn:hover { background: #4a8ad4; }
+        .action-btn.secondary { background: #333; color: #fff; }
+        .action-btn.secondary:hover { background: #444; }
+
         .dicom-text { position: absolute; color: #cfcfcf; font-family: 'Courier New', Courier, monospace; font-size: 13px; pointer-events: none; text-shadow: 1px 1px 3px rgba(0,0,0,1); z-index: 10; }
         .tl { top: 20px; left: 20px; }
         .tr { top: 20px; right: 20px; text-align: right; }
@@ -91,7 +98,13 @@
             <div id="loading-overlay">
                 <div class="spinner" id="spinner"></div>
                 <div class="loading-text" id="loading-msg">PULLING FROM GITHUB MAIN BRANCH...</div>
+                
                 <div class="error-details" id="error-msg"></div>
+                
+                <div class="error-actions" id="error-actions" style="display: none;">
+                    <button class="action-btn" onclick="loadDiagnosticTest()">Load Diagnostic Test</button>
+                    <button class="action-btn secondary" onclick="enableManualMode()">Dismiss & Manual Mode</button>
+                </div>
             </div>
             
             <div id="toast">Volume Loaded Successfully</div>
@@ -133,17 +146,45 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
+    // Function to hide the black screen so drag-and-drop works
+    function enableManualMode() {
+        document.getElementById('loading-overlay').style.display = 'none';
+        document.getElementById('series-status').innerText = "Status: MANUAL MODE";
+        document.getElementById('series-status').style.color = "#f5a623";
+        showToast("Drag and Drop Enabled - Drop file anywhere");
+    }
+
+    // Function to load a guaranteed working file to prove the system isn't broken
+    async function loadDiagnosticTest() {
+        document.getElementById('error-msg').style.display = 'none';
+        document.getElementById('error-actions').style.display = 'none';
+        document.getElementById('spinner').style.display = 'block';
+        document.getElementById('loading-msg').innerText = "LOADING TEST DATA...";
+        document.getElementById('loading-msg').style.color = "#5c9ce6";
+        
+        try {
+            await nv.loadVolumes([{url: "https://niivue.github.io/niivue/images/mni152.nii.gz", colormap: "gray"}]);
+            document.getElementById('loading-overlay').style.display = 'none';
+            document.getElementById('pt-name').innerText = "TEST^TEMPLATE";
+            showToast("Diagnostic Test Volume Loaded");
+        } catch(e) {
+            alert("Critical Error: WebGL renderer failed. Use a different browser.");
+        }
+    }
+
     async function autoFetchVolume() {
         const loadingOverlay = document.getElementById('loading-overlay');
         const errorMsg = document.getElementById('error-msg');
         const seriesStatus = document.getElementById('series-status');
         const spinner = document.getElementById('spinner');
         const loadingMsg = document.getElementById('loading-msg');
+        const errorActions = document.getElementById('error-actions');
         
         // Reset UI
         loadingOverlay.style.display = 'flex';
         loadingOverlay.style.opacity = '1';
         errorMsg.style.display = 'none';
+        errorActions.style.display = 'none';
         spinner.style.display = 'block';
         loadingMsg.innerText = "PULLING FROM GITHUB MAIN BRANCH...";
         loadingMsg.style.color = "#5c9ce6";
@@ -179,10 +220,13 @@
             errorMsg.style.display = 'block';
             errorMsg.innerHTML = `
                 <strong>Diagnostic Details:</strong><br><br>
-                1. Make sure the file is EXACTLY named <strong>CT_AVM.nii</strong> (case-sensitive) in your repo.<br>
-                2. Check if the file is larger than GitHub's 50MB raw limit. If it is, you MUST zip it into a .nii.gz file.<br><br>
+                1. Make sure the file is EXACTLY named <strong>CT_AVM.nii</strong> in your repo.<br>
+                2. If the file is large, GitHub is cutting the connection. Compress it to a .nii.gz file and upload it instead.<br><br>
                 <em>Console Error: ${error.message}</em>
             `;
+            
+            // Show the buttons so you can bypass the error screen!
+            errorActions.style.display = 'flex';
         }
     }
 
