@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical PACS Workstation - CT AVM</title>
+    <title>Clinical PACS Workstation 22~</title>
     <script src="https://unpkg.com/@niivue/niivue@0.42.1/dist/index.js"></script>
     <style>
-        /* True Clinical Dark Mode */
         body, html { margin: 0; padding: 0; height: 100%; background-color: #000000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #b3b3b3; overflow: hidden; }
+        .pacs-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #080808; box-sizing: border-box; }
         
-        .pacs-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; background-color: #080808; border: 1px solid #1a1a1a; box-sizing: border-box; }
-        
-        /* Headers & Toolbars */
         .pacs-header { background-color: #0a0a0a; border-bottom: 1px solid #1a1a1a; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 10; }
         .patient-info { display: flex; gap: 30px; color: #d4d4d4; }
         .patient-info span { color: #5c9ce6; font-weight: 600; margin-right: 6px; }
@@ -19,46 +16,37 @@
 
         .pacs-toolbar { background-color: #121212; padding: 10px 20px; display: flex; gap: 15px; border-bottom: 1px solid #000; align-items: center; z-index: 9; flex-wrap: wrap; }
         .tool-group { display: flex; border-right: 1px solid #2a2a2a; padding-right: 15px; margin-right: 5px; align-items: center; gap: 5px; }
-        .pacs-btn, .pacs-select { background: #1a1a1a; color: #a3a3a3; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase; outline: none; }
+        .pacs-btn, .pacs-select { background: #1a1a1a; color: #a3a3a3; border: 1px solid #333; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase; }
         .pacs-btn:hover, .pacs-select:hover { background: #333; color: #fff; border-color: #555; }
         .pacs-btn.active { background: #1c3d5a; color: #fff; border-color: #5c9ce6; }
         .pacs-btn.action { background: #238636; color: white; border-color: #2ea043; }
-        .pacs-btn.action:hover { background: #2ea043; }
 
-        /* Workspace */
         .pacs-workspace { display: flex; flex: 1; overflow: hidden; }
-        
         .pacs-sidebar { width: 260px; background-color: #0c0c0c; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; z-index: 8; }
         .sidebar-title { background: #111; padding: 12px 15px; font-size: 11px; font-weight: bold; color: #777; text-transform: uppercase; border-bottom: 1px solid #222; }
         .series-list { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
         .series-card { background: #161616; border: 1px solid #222; border-left: 4px solid #5c9ce6; padding: 12px; border-radius: 4px; cursor: pointer; }
-        .series-card.active { background: #1e252b; border-color: #5c9ce6; }
         .series-card span { display: block; font-size: 11px; margin-bottom: 5px; color: #999; }
         .series-card .seq { color: #e0e0e0; font-weight: bold; font-size: 13px; margin-bottom: 8px; }
 
-        /* Canvas Area */
         .pacs-viewport-wrapper { flex: 1; position: relative; background-color: #000; display: flex; justify-content: center; align-items: center; }
         canvas { width: 100%; height: 100%; display: block; outline: none; }
 
-        /* Overlays */
-        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.5s; }
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: opacity 0.3s; }
         .spinner { border: 3px solid #1a1a1a; border-top: 3px solid #5c9ce6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .loading-text { color: #5c9ce6; font-weight: bold; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; margin-bottom: 10px; text-align: center; }
         
-        .error-actions { display: flex; gap: 15px; margin-top: 20px; }
-
-        /* DICOM Text */
+        .error-box { display: none; background: #2a0000; border: 1px solid #ff4444; padding: 20px; border-radius: 8px; max-width: 80%; text-align: center; }
+        .error-box h3 { color: #ff4444; margin-top: 0; }
+        .error-box p { color: #ddd; font-size: 13px; line-height: 1.5; }
+        
         .dicom-text { position: absolute; color: #cfcfcf; font-family: 'Courier New', Courier, monospace; font-size: 13px; pointer-events: none; text-shadow: 1px 1px 3px rgba(0,0,0,1); z-index: 10; }
-        .tl { top: 20px; left: 20px; }
-        .tr { top: 20px; right: 20px; text-align: right; }
-        .bl { bottom: 20px; left: 20px; }
-        .br { bottom: 20px; right: 20px; text-align: right; }
+        .tl { top: 20px; left: 20px; } .tr { top: 20px; right: 20px; text-align: right; }
+        .bl { bottom: 20px; left: 20px; } .br { bottom: 20px; right: 20px; text-align: right; }
         .dicom-value { color: #f5a623; }
         
         #toast { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1c3d5a; color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; font-weight: bold; opacity: 0; transition: opacity 0.3s; z-index: 200; pointer-events: none; border: 1px solid #5c9ce6; }
-        
-        /* Hidden file input */
         #file-uploader { display: none; }
     </style>
 </head>
@@ -71,13 +59,13 @@
             <div><span>Name:</span> <span class="dicom-value" id="pt-name">ANONYMIZED</span></div>
             <div><span>Study:</span> CT ANGIOGRAPHY</div>
         </div>
-        <div class="hospital-logo">MED-STATION V5.0</div>
+        <div class="hospital-logo">MED-STATION V5.1</div>
     </div>
 
     <div class="pacs-toolbar">
         <div class="tool-group">
             <input type="file" id="file-uploader" accept=".nii,.nii.gz,.dcm">
-            <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">📂 Open File</button>
+            <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">📂 Open Local File</button>
         </div>
 
         <div class="tool-group">
@@ -93,9 +81,8 @@
                 <option value="gray">Grayscale</option>
                 <option value="bone">Bone (CT)</option>
                 <option value="plasma">Plasma Heatmap</option>
-                <option value="viridis">Viridis</option>
             </select>
-            <button class="pacs-btn" onclick="toggleCrosshair()">⌖ Crosshair</button>
+            <button class="pacs-btn" onclick="toggleCrosshair()">⌖ Crosshairs</button>
             <button class="pacs-btn" onclick="resetView()">↺ Reset View</button>
         </div>
     </div>
@@ -104,10 +91,10 @@
         <div class="pacs-sidebar">
             <div class="sidebar-title">Series Explorer</div>
             <div class="series-list">
-                <div class="series-card active" onclick="forceFetch()">
+                <div class="series-card active">
                     <span class="seq">1. CT_AVM.nii</span>
                     <span>Modality: CT</span>
-                    <span id="series-status" style="color:#5c9ce6;">Status: Fetching...</span>
+                    <span id="series-status" style="color:#5c9ce6;">Status: Initializing...</span>
                 </div>
             </div>
         </div>
@@ -115,19 +102,20 @@
         <div class="pacs-viewport-wrapper">
             <div id="loading-overlay">
                 <div class="spinner" id="spinner"></div>
-                <div class="loading-text" id="loading-msg">PULLING FROM GITHUB...</div>
+                <div class="loading-text" id="loading-msg">INITIALIZING 3D ENGINE...</div>
                 
-                <div class="error-actions" id="error-actions" style="display: none;">
-                    <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">📂 Browse Local File</button>
-                    <button class="pacs-btn" onclick="loadDiagnosticTest()">Load Test Data</button>
+                <div class="error-box" id="error-box">
+                    <h3>❌ WebGL Engine Failed</h3>
+                    <p id="error-details">Your device or browser blocked the 3D graphics renderer. This usually happens on mobile devices due to lack of graphics memory.</p>
+                    <button class="pacs-btn action" onclick="document.getElementById('file-uploader').click()">Try Opening a Local File</button>
                 </div>
             </div>
             
-            <div id="toast">Volume Loaded Successfully</div>
+            <div id="toast">Ready</div>
 
-            <div class="dicom-text tl">Inst: <span class="dicom-value">General Med</span><br>Date: 20260427</div>
+            <div class="dicom-text tl">Inst: General Med<br>Date: 20260427</div>
             <div class="dicom-text tr">Format: <span class="dicom-value" id="overlay-format">NIfTI</span><br>Map: <span class="dicom-value" id="overlay-map">Grayscale</span></div>
-            <div class="dicom-text bl">Scroll: Z-Axis<br>Right-Click: Contrast</div>
+            <div class="dicom-text bl">Action: Left-Click & Drag to Pan<br>Right-Click & Drag for Contrast</div>
             <div class="dicom-text br" style="color: #5c9ce6;">INTERACTIVE MODE<br>READY</div>
 
             <canvas id="gl"></canvas>
@@ -136,18 +124,7 @@
 </div>
 
 <script>
-    // Initialize Medical Renderer
-    const nv = new niivue.Niivue({
-        dragAndDropEnabled: true, // Native Niivue drag/drop
-        backColor: [0, 0, 0, 1], 
-        show3Dcrosshair: true,   
-        crosshairColor: [0, 0.9, 0, 1], 
-        isColorbar: false,       
-        textHeight: 0.04         
-    });
-    
-    nv.attachTo('gl');
-    nv.setSliceType(nv.sliceTypeMultiplanar);
+    let nv;
 
     function showToast(message) {
         const toast = document.getElementById('toast');
@@ -156,11 +133,39 @@
         setTimeout(() => { toast.style.opacity = '0'; }, 3000);
     }
 
-    // ==========================================
-    // TOOLBAR FUNCTIONS
-    // ==========================================
-    
+    function showFatalError(details) {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('loading-msg').style.display = 'none';
+        document.getElementById('error-box').style.display = 'block';
+        if (details) {
+            document.getElementById('error-details').innerText = details;
+        }
+        document.getElementById('series-status').innerText = "Status: ENGINE CRASH";
+        document.getElementById('series-status').style.color = "#ff4444";
+    }
+
+    // 1. SAFE INITIALIZATION
+    try {
+        // We set isHighResolution to false to prevent mobile browsers from crashing
+        nv = new niivue.Niivue({
+            dragAndDropEnabled: false, // Turned off to prevent browser download conflicts
+            backColor: [0, 0, 0, 1], 
+            show3Dcrosshair: true,   
+            crosshairColor: [0, 0.9, 0, 1], 
+            isColorbar: false,
+            isHighResolutionCapable: false 
+        });
+        
+        nv.attachTo('gl');
+        nv.setSliceType(nv.sliceTypeMultiplanar);
+    } catch (e) {
+        showFatalError("Your browser does not support WebGL2, which is required to view 3D medical images. Try using Google Chrome on a computer.");
+        console.error(e);
+    }
+
+    // 2. TOOLBAR CONTROLS
     function setView(viewType) {
+        if(!nv) return;
         document.querySelectorAll('.tool-group .pacs-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById('btn-' + viewType).classList.add('active');
 
@@ -172,6 +177,7 @@
     }
 
     function changeColorMap() {
+        if(!nv) return;
         const selectedMap = document.getElementById('colormap-select').value;
         document.getElementById('overlay-map').innerText = selectedMap;
         if (nv.volumes.length > 0) {
@@ -182,60 +188,49 @@
 
     let crosshairVisible = true;
     function toggleCrosshair() {
+        if(!nv) return;
         crosshairVisible = !crosshairVisible;
         nv.setCrosshairWidth(crosshairVisible ? 1 : 0);
     }
 
     function resetView() {
-        // Resets zoom, pan, and window/level contrast
-        if(nv.volumes.length > 0) {
-            nv.resetScene();
-            nv.volumes[0].cal_min = nv.volumes[0].global_min;
-            nv.volumes[0].cal_max = nv.volumes[0].global_max;
-            nv.updateGLVolume();
-            showToast("View Reset");
-        }
+        if(!nv || nv.volumes.length === 0) return;
+        nv.resetScene();
+        nv.volumes[0].cal_min = nv.volumes[0].global_min;
+        nv.volumes[0].cal_max = nv.volumes[0].global_max;
+        nv.updateGLVolume();
+        showToast("View Reset");
     }
 
-    // ==========================================
-    // FILE LOADING LOGIC
-    // ==========================================
-
-    // Handle Local File Upload Button
+    // 3. FILE LOADERS
     document.getElementById('file-uploader').addEventListener('change', async function(e) {
+        if(!nv) {
+            alert("The 3D engine failed to start. Cannot load file.");
+            return;
+        }
+        
         const file = e.target.files[0];
         if (file) {
+            // Force the error screen to hide if it was showing
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('series-status').innerText = "Status: LOCAL FILE";
             document.getElementById('series-status').style.color = "#00ff00";
             document.getElementById('pt-name').innerText = file.name;
             
             try {
-                // Pass the local file object to the renderer
                 await nv.loadFromFile(file);
                 showToast("File Loaded Successfully");
             } catch (err) {
-                alert("Renderer Error: Ensure it is a valid .nii, .nii.gz, or .dcm file.");
+                alert("Renderer Error: Ensure it is a valid medical format.");
             }
         }
-        // Reset input so the same file can be clicked again
         e.target.value = ''; 
     });
 
-    // Handle GitHub Auto Fetch
-    async function autoFetchVolume() {
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const seriesStatus = document.getElementById('series-status');
-        const spinner = document.getElementById('spinner');
-        const loadingMsg = document.getElementById('loading-msg');
-        const errorActions = document.getElementById('error-actions');
+    async function startApp() {
+        if (!nv) return; // Stop if WebGL failed
         
-        loadingOverlay.style.display = 'flex';
-        loadingOverlay.style.opacity = '1';
-        errorActions.style.display = 'none';
-        spinner.style.display = 'block';
-        loadingMsg.innerText = "PULLING FROM GITHUB...";
-        loadingMsg.style.color = "#5c9ce6";
+        document.getElementById('loading-msg').innerText = "PULLING FROM GITHUB...";
         
         try {
             const customVolume = [{
@@ -246,51 +241,34 @@
             
             await nv.loadVolumes(customVolume);
             
-            seriesStatus.innerText = "Status: GitHub Auto-Load";
-            seriesStatus.style.color = "#00ff00";
+            document.getElementById('series-status').innerText = "Status: Online Sync OK";
+            document.getElementById('series-status').style.color = "#00ff00";
             
-            loadingOverlay.style.opacity = '0';
-            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => { document.getElementById('loading-overlay').style.display = 'none'; }, 300);
 
         } catch (error) {
-            console.error(error);
-            seriesStatus.innerText = "Status: FETCH FAILED";
-            seriesStatus.style.color = "#ff4444";
+            console.warn("GitHub fetch failed, loading diagnostic test image instead...");
             
-            spinner.style.display = 'none';
-            loadingMsg.innerText = "GITHUB FETCH BLOCKED";
-            loadingMsg.style.color = "#ff4444";
-            
-            // Show the fallback manual buttons!
-            errorActions.style.display = 'flex';
+            // If the custom URL fails, smoothly fallback to a tiny image so the UI still works
+            try {
+                await nv.loadVolumes([{url: "https://niivue.github.io/niivue/images/mni152.nii.gz"}]);
+                document.getElementById('series-status').innerText = "Status: DIAGNOSTIC TEST";
+                document.getElementById('series-status').style.color = "#f5a623";
+                document.getElementById('overlay-format').innerText = "TEST FILE";
+                
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => { document.getElementById('loading-overlay').style.display = 'none'; }, 300);
+                showToast("GitHub URL failed. Loaded Test Data.");
+                
+            } catch(fallbackErr) {
+                showFatalError("Network error or file size too large for this browser to handle.");
+            }
         }
     }
 
-    async function loadDiagnosticTest() {
-        document.getElementById('spinner').style.display = 'block';
-        document.getElementById('loading-msg').innerText = "LOADING TEST DATA...";
-        document.getElementById('loading-msg').style.color = "#5c9ce6";
-        document.getElementById('error-actions').style.display = 'none';
-        
-        try {
-            await nv.loadVolumes([{url: "https://niivue.github.io/niivue/images/mni152.nii.gz", colormap: "gray"}]);
-            document.getElementById('loading-overlay').style.display = 'none';
-            document.getElementById('pt-name').innerText = "TEST^TEMPLATE";
-            document.getElementById('series-status').innerText = "Status: DIAGNOSTIC";
-            document.getElementById('series-status').style.color = "#f5a623";
-            showToast("Diagnostic Test Volume Loaded");
-        } catch(e) {
-            alert("WebGL renderer failed.");
-        }
-    }
-
-    function forceFetch() {
-        autoFetchVolume();
-    }
-
-    // Trigger on load
     window.onload = function() {
-        autoFetchVolume();
+        startApp();
     };
 </script>
 
